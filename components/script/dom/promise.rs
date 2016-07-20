@@ -5,7 +5,7 @@
 use dom::bindings::error::Fallible;
 use dom::bindings::global::GlobalRef;
 use dom::bindings::reflector::{Reflectable, Reflector};
-use js::jsapi::{JSAutoCompartment, RootedObject, CallArgs, JS_GetFunctionObject, JS_NewFunction};
+use js::jsapi::{JSAutoCompartment, CallArgs, JS_GetFunctionObject, JS_NewFunction};
 use js::jsapi::{JSContext, HandleValue, HandleObject, IsPromiseObject, CallOriginalPromiseResolve};
 use js::jsapi::{MutableHandleObject, NewPromiseObject};
 use js::jsval::{JSVal, UndefinedValue};
@@ -21,7 +21,7 @@ impl Promise {
     #[allow(unsafe_code)]
     pub fn new(global: GlobalRef) -> Rc<Promise> {
         let cx = global.get_cx();
-        let mut obj = RootedObject::new(cx, ptr::null_mut());
+        rooted!(in(cx) let mut obj = ptr::null_mut());
         unsafe {
             Promise::create_js_promise(cx, HandleObject::null(), obj.handle_mut());
         }
@@ -44,7 +44,7 @@ impl Promise {
     unsafe fn create_js_promise(cx: *mut JSContext, proto: HandleObject, mut obj: MutableHandleObject) {
         let do_nothing_func = JS_NewFunction(cx, Some(do_nothing_promise_executor), 2, 0, ptr::null());
         assert!(!do_nothing_func.is_null());
-        let do_nothing_obj = RootedObject::new(cx, JS_GetFunctionObject(do_nothing_func));
+        rooted!(in(cx) let do_nothing_obj = JS_GetFunctionObject(do_nothing_func));
         assert!(!do_nothing_obj.handle().is_null());
         *obj = NewPromiseObject(cx, do_nothing_obj.handle(), proto);
         assert!(!obj.is_null());
@@ -55,9 +55,7 @@ impl Promise {
                    cx: *mut JSContext,
                    value: HandleValue) -> Fallible<Rc<Promise>> {
         let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
-        let p = unsafe {
-            RootedObject::new(cx, CallOriginalPromiseResolve(cx, value))
-        };
+        rooted!(in(cx) let p = unsafe { CallOriginalPromiseResolve(cx, value) });
         assert!(!p.handle().is_null());
         Ok(Promise::new_with_js_promise(p.handle()))
     }
