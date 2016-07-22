@@ -2,12 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use dom::bindings::codegen::Bindings::PromiseBinding::AnyCallback;
 use dom::bindings::error::Fallible;
 use dom::bindings::global::GlobalRef;
 use dom::bindings::reflector::{Reflectable, Reflector};
 use js::jsapi::{JSAutoCompartment, CallArgs, JS_GetFunctionObject, JS_NewFunction};
 use js::jsapi::{JSContext, HandleValue, HandleObject, IsPromiseObject, CallOriginalPromiseResolve};
-use js::jsapi::{MutableHandleObject, NewPromiseObject};
+use js::jsapi::{MutableHandleObject, NewPromiseObject, JS_WrapObject};
 use js::jsval::{JSVal, UndefinedValue};
 use std::ptr;
 use std::rc::Rc;
@@ -59,6 +60,56 @@ impl Promise {
         assert!(!p.handle().is_null());
         Ok(Promise::new_with_js_promise(p.handle()))
     }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn Then(cx: *mut JSContext,
+                callee: HandleObject,
+                cb_resolve: AnyCallback,
+                cb_reject: AnyCallback,
+                mut result: MutableHandleObject) {
+
+        // todo
+        /*rooted!(in(cx) let promise = ptr::null());
+        if !JS_WrapObject(cx, ???) {
+
+        }*/
+
+
+        // firefox
+
+        /*JS::Rooted<JSObject*> promise(aCx, PromiseObj());
+        if (!JS_WrapObject(aCx, &promise)) {
+        }
+
+        JS::Rooted<JSObject*> resolveCallback(aCx);
+        if (aResolveCallback) {
+        resolveCallback = aResolveCallback->Callback();
+        if (!JS_WrapObject(aCx, &resolveCallback)) {
+          aRv.NoteJSContextException(aCx);
+          return;
+        }
+        }
+
+        JS::Rooted<JSObject*> rejectCallback(aCx);
+        if (aRejectCallback) {
+        rejectCallback = aRejectCallback->Callback();
+        if (!JS_WrapObject(aCx, &rejectCallback)) {
+          aRv.NoteJSContextException(aCx);
+          return;
+        }
+        }
+
+        JS::Rooted<JSObject*> retval(aCx);
+        retval = JS::CallOriginalPromiseThen(aCx, promise, resolveCallback,
+                                           rejectCallback);
+        if (!retval) {
+        aRv.NoteJSContextException(aCx);
+        return;
+        }
+
+        aRetval.setObject(*retval);*/
+    }
+
 }
 
 #[allow(unsafe_code)]
