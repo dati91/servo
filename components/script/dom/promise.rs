@@ -5,17 +5,19 @@
 use dom::bindings::codegen::Bindings::PromiseBinding::AnyCallback;
 use dom::bindings::error::Fallible;
 use dom::bindings::global::GlobalRef;
+use dom::bindings::js::{JS, MutNullableHeap, Root};
 use dom::bindings::reflector::{Reflectable, Reflector};
 use js::jsapi::{JSAutoCompartment, CallArgs, JS_GetFunctionObject, JS_NewFunction};
-use js::jsapi::{JSContext, HandleValue, HandleObject, IsPromiseObject, CallOriginalPromiseResolve};
-use js::jsapi::{MutableHandleObject, NewPromiseObject, JS_WrapObject};
+use js::jsapi::{JSContext, JSObject, HandleValue, HandleObject, IsPromiseObject};
+use js::jsapi::{CallOriginalPromiseResolve, CallOriginalPromiseReject};
+use js::jsapi::{MutableHandleObject, NewPromiseObject, ResolvePromise, RejectPromise, JS_ClearPendingException};
 use js::jsval::{JSVal, UndefinedValue};
 use std::ptr;
 use std::rc::Rc;
 
 #[dom_struct]
 pub struct Promise {
-    reflector: Reflector
+    reflector: Reflector,
 }
 
 impl Promise {
@@ -43,7 +45,8 @@ impl Promise {
 
     #[allow(unsafe_code)]
     unsafe fn create_js_promise(cx: *mut JSContext, proto: HandleObject, mut obj: MutableHandleObject) {
-        let do_nothing_func = JS_NewFunction(cx, Some(do_nothing_promise_executor), 2, 0, ptr::null());
+        let do_nothing_func = JS_NewFunction(cx, Some(do_nothing_promise_executor), /* nargs = */ 2,
+                                             /* flags = */ 0, ptr::null());
         assert!(!do_nothing_func.is_null());
         rooted!(in(cx) let do_nothing_obj = JS_GetFunctionObject(do_nothing_func));
         assert!(!do_nothing_obj.handle().is_null());
@@ -62,52 +65,59 @@ impl Promise {
     }
 
     #[allow(unrooted_must_root, unsafe_code)]
-    pub fn Then(cx: *mut JSContext,
+    pub fn Reject(global: GlobalRef,
+                  cx: *mut JSContext,
+                  value: HandleValue) -> Fallible<Rc<Promise>> {
+        let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
+        rooted!(in(cx) let p = unsafe { CallOriginalPromiseReject(cx, value) });
+        assert!(!p.handle().is_null());
+        Ok(Promise::new_with_js_promise(p.handle()))
+    }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn MaybeResolve(&self,
+                        cx: *mut JSContext,
+                        value: HandleValue) {
+        unsafe {
+            rooted!(in(cx) let p = unsafe { self.promise_obj() });
+            if !ResolvePromise(cx, p.handle(), value) {
+                JS_ClearPendingException(cx);
+            }
+        }
+    }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn MaybeReject(&self,
+                       cx: *mut JSContext,
+                       value: HandleValue) {
+        unsafe {
+            rooted!(in(cx) let p = unsafe { self.promise_obj() });
+            if !RejectPromise(cx, p.handle(), value) {
+                JS_ClearPendingException(cx);
+            }
+        }
+    }
+
+    #[allow(unrooted_must_root, unsafe_code)]
+    pub fn Then(&self,
+                cx: *mut JSContext,
                 callee: HandleObject,
                 cb_resolve: AnyCallback,
                 cb_reject: AnyCallback,
                 mut result: MutableHandleObject) {
+        //rooted!(in(cx) let promise = unsafe { self.promise_obj() });
+    }
 
-        // todo
-        /*rooted!(in(cx) let promise = ptr::null());
-        if !JS_WrapObject(cx, ???) {
-
-        }*/
-
-
-        // firefox
-
-        /*JS::Rooted<JSObject*> promise(aCx, PromiseObj());
-        if (!JS_WrapObject(aCx, &promise)) {
+    #[allow(unsafe_code)]
+    fn promise_obj(&self) -> *mut JSObject {
+        let obj = self.reflector().get_jsobject();
+        unsafe {
+            if IsPromiseObject(obj) {
+                // TODO we should call this somehow
+                //ExposeObjectToActiveJS(obj.get());
+            }
         }
-
-        JS::Rooted<JSObject*> resolveCallback(aCx);
-        if (aResolveCallback) {
-        resolveCallback = aResolveCallback->Callback();
-        if (!JS_WrapObject(aCx, &resolveCallback)) {
-          aRv.NoteJSContextException(aCx);
-          return;
-        }
-        }
-
-        JS::Rooted<JSObject*> rejectCallback(aCx);
-        if (aRejectCallback) {
-        rejectCallback = aRejectCallback->Callback();
-        if (!JS_WrapObject(aCx, &rejectCallback)) {
-          aRv.NoteJSContextException(aCx);
-          return;
-        }
-        }
-
-        JS::Rooted<JSObject*> retval(aCx);
-        retval = JS::CallOriginalPromiseThen(aCx, promise, resolveCallback,
-                                           rejectCallback);
-        if (!retval) {
-        aRv.NoteJSContextException(aCx);
-        return;
-        }
-
-        aRetval.setObject(*retval);*/
+        obj.get()
     }
 
 }
