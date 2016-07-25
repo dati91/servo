@@ -42,6 +42,7 @@ use dom::element::Element;
 use dom::event::{Event, EventBubbles, EventCancelable};
 use dom::htmlanchorelement::HTMLAnchorElement;
 use dom::node::{Node, NodeDamage, window_from_node};
+use dom::promise::{enqueue_job};
 use dom::serviceworker::TrustedServiceWorkerAddress;
 use dom::serviceworkerregistration::ServiceWorkerRegistration;
 use dom::servohtmlparser::ParserContext;
@@ -60,7 +61,7 @@ use ipc_channel::router::ROUTER;
 use js::glue::GetWindowProxyClass;
 use js::jsapi::{DOMProxyShadowsResult, HandleId, HandleObject};
 use js::jsapi::{JSAutoCompartment, JSContext, JS_SetWrapObjectCallbacks};
-use js::jsapi::{JSTracer, SetWindowProxyClass};
+use js::jsapi::{JSTracer, SetWindowProxyClass, SetEnqueuePromiseJobCallback};
 use js::jsval::UndefinedValue;
 use js::rust::Runtime;
 use mem::heap_size_of_self_and_children;
@@ -546,6 +547,7 @@ impl ScriptThread {
             JS_SetWrapObjectCallbacks(runtime.rt(),
                                       &WRAP_CALLBACKS);
             SetWindowProxyClass(runtime.rt(), GetWindowProxyClass());
+            SetEnqueuePromiseJobCallback(runtime.rt(), Some(enqueue_job), ptr::null());
         }
 
         // Ask the router to proxy IPC messages from the devtools to us.
