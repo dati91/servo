@@ -24,6 +24,7 @@ pub struct Promise {
 impl Promise {
     #[allow(unsafe_code)]
     pub fn new(global: GlobalRef) -> Rc<Promise> {
+        println!("new");
         let cx = global.get_cx();
         rooted!(in(cx) let mut obj = ptr::null_mut());
         unsafe {
@@ -34,6 +35,7 @@ impl Promise {
 
     #[allow(unsafe_code, unrooted_must_root)]
     fn new_with_js_promise(obj: HandleObject) -> Rc<Promise> {
+        println!("new_with_js_promise");
         unsafe {
             assert!(IsPromiseObject(obj));
         }
@@ -46,6 +48,7 @@ impl Promise {
 
     #[allow(unsafe_code)]
     unsafe fn create_js_promise(cx: *mut JSContext, proto: HandleObject, mut obj: MutableHandleObject) {
+        println!("create_js_promise");
         let do_nothing_func = JS_NewFunction(cx, Some(do_nothing_promise_executor), /* nargs = */ 2,
                                              /* flags = */ 0, ptr::null());
         assert!(!do_nothing_func.is_null());
@@ -59,6 +62,7 @@ impl Promise {
     pub fn Resolve(global: GlobalRef,
                    cx: *mut JSContext,
                    value: HandleValue) -> Fallible<Rc<Promise>> {
+        println!("Resolve");
         let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
         rooted!(in(cx) let p = unsafe { CallOriginalPromiseResolve(cx, value) });
         assert!(!p.handle().is_null());
@@ -69,6 +73,7 @@ impl Promise {
     pub fn Reject(global: GlobalRef,
                   cx: *mut JSContext,
                   value: HandleValue) -> Fallible<Rc<Promise>> {
+        println!("Reject");
         let _ac = JSAutoCompartment::new(cx, global.reflector().get_jsobject().get());
         rooted!(in(cx) let p = unsafe { CallOriginalPromiseReject(cx, value) });
         assert!(!p.handle().is_null());
@@ -79,6 +84,7 @@ impl Promise {
     pub fn MaybeResolve(&self,
                         cx: *mut JSContext,
                         value: HandleValue) {
+        println!("MaybeResolve");
         unsafe {
             rooted!(in(cx) let p = self.promise_obj());
             if !ResolvePromise(cx, p.handle(), value) {
@@ -91,6 +97,7 @@ impl Promise {
     pub fn MaybeReject(&self,
                        cx: *mut JSContext,
                        value: HandleValue) {
+        println!("MaybeReject");
         unsafe {
             rooted!(in(cx) let p = self.promise_obj());
             if !RejectPromise(cx, p.handle(), value) {
@@ -107,18 +114,23 @@ impl Promise {
                 cb_reject: AnyCallback,
                 mut result: MutableHandleObject) {
         unsafe {
+            println!("then promise");
             rooted!(in(cx) let promise = self.promise_obj());
+            println!("then resolve");
             rooted!(in(cx) let resolve = cb_resolve.callback());
+            println!("then reject");
             rooted!(in(cx) let reject = cb_reject.callback());
-
+            println!("then res");
             rooted!(in(cx) let mut res =
                 CallOriginalPromiseThen(cx, promise.handle(), resolve.handle(), reject.handle()));
+            println!("then result");
             result = res.handle_mut();
         }
     }
 
     #[allow(unsafe_code)]
     fn promise_obj(&self) -> *mut JSObject {
+        println!("promise_obj");
         let obj = self.reflector().get_jsobject();
         unsafe {
             if IsPromiseObject(obj) {
@@ -133,6 +145,7 @@ impl Promise {
 
 #[allow(unsafe_code)]
 unsafe extern fn do_nothing_promise_executor(_cx: *mut JSContext, argc: u32, vp: *mut JSVal) -> bool {
+    println!("do_nothing_promise_executor");
     let args = CallArgs::from_vp(vp, argc);
     *args.rval() = UndefinedValue();
     true
