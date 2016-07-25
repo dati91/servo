@@ -2,14 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use dom::bindings::callback::CallbackContainer;
 use dom::bindings::codegen::Bindings::PromiseBinding::AnyCallback;
 use dom::bindings::error::Fallible;
 use dom::bindings::global::GlobalRef;
-use dom::bindings::js::{JS, MutNullableHeap, Root};
+//use dom::bindings::js::{JS, MutNullableHeap, Root};
 use dom::bindings::reflector::{Reflectable, Reflector};
 use js::jsapi::{JSAutoCompartment, CallArgs, JS_GetFunctionObject, JS_NewFunction};
 use js::jsapi::{JSContext, JSObject, HandleValue, HandleObject, IsPromiseObject};
-use js::jsapi::{CallOriginalPromiseResolve, CallOriginalPromiseReject};
+use js::jsapi::{CallOriginalPromiseResolve, CallOriginalPromiseReject, CallOriginalPromiseThen};
 use js::jsapi::{MutableHandleObject, NewPromiseObject, ResolvePromise, RejectPromise, JS_ClearPendingException};
 use js::jsval::{JSVal, UndefinedValue};
 use std::ptr;
@@ -79,7 +80,7 @@ impl Promise {
                         cx: *mut JSContext,
                         value: HandleValue) {
         unsafe {
-            rooted!(in(cx) let p = unsafe { self.promise_obj() });
+            rooted!(in(cx) let p = self.promise_obj());
             if !ResolvePromise(cx, p.handle(), value) {
                 JS_ClearPendingException(cx);
             }
@@ -91,7 +92,7 @@ impl Promise {
                        cx: *mut JSContext,
                        value: HandleValue) {
         unsafe {
-            rooted!(in(cx) let p = unsafe { self.promise_obj() });
+            rooted!(in(cx) let p = self.promise_obj());
             if !RejectPromise(cx, p.handle(), value) {
                 JS_ClearPendingException(cx);
             }
@@ -101,11 +102,19 @@ impl Promise {
     #[allow(unrooted_must_root, unsafe_code)]
     pub fn Then(&self,
                 cx: *mut JSContext,
-                callee: HandleObject,
+                _callee: HandleObject,
                 cb_resolve: AnyCallback,
                 cb_reject: AnyCallback,
                 mut result: MutableHandleObject) {
-        //rooted!(in(cx) let promise = unsafe { self.promise_obj() });
+        unsafe {
+            rooted!(in(cx) let promise = self.promise_obj());
+            rooted!(in(cx) let resolve = cb_resolve.callback());
+            rooted!(in(cx) let reject = cb_reject.callback());
+
+            rooted!(in(cx) let mut res =
+                CallOriginalPromiseThen(cx, promise.handle(), resolve.handle(), reject.handle()));
+            result = res.handle_mut();
+        }
     }
 
     #[allow(unsafe_code)]
