@@ -15,7 +15,7 @@ use js::jsapi::{MutableHandleObject, NewPromiseObject, ResolvePromise, RejectPro
 use js::jsval::{JSVal, UndefinedValue};
 use std::ptr;
 use std::rc::Rc;
-use libc::c_void;
+use std::os::raw::c_void;
 
 #[dom_struct]
 pub struct Promise {
@@ -140,31 +140,6 @@ impl Promise {
             }
         }
         obj.get()
-    }
-}
-
-// src/shell/js.cpp 629-657
-pub fn enqueue_job(cx: *mut JSContext,
-                   job: HandleObject,
-                   _data: *const c_void) {
-    // RootedObject job(cx);
-    //rooted!(in(cx) let job = job);
-
-    // UndefinedHandleValue
-    rooted!(in(cx) let uval = UndefinedValue());
-
-    // JS::HandleValueArray args(JS::HandleValueArray::empty());
-    rooted!(in(cx) let args = HandleValueArray::empty());
-
-    // RootedValue rval(cx);
-    rooted!(in(cx) let rval = UndefinedValue());
-
-    // AutoCompartment ac(cx, job);
-    let _ac = JSAutoCompartment::new(cx, job.get());
-
-    // if (!JS::Call(cx, UndefinedHandleValue, job, args, &rval))
-    if !Call(cx, uval.handle(), job, args.handle(), rval.handle_mut()) {
-        JS_ReportPendingException(cx);
     }
 }
 
