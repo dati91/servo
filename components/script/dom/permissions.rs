@@ -2,11 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use dom::bindings::codegen::Bindings::PermissionStatusBinding::PermissionDescriptor;
+use dom::bindings::codegen::Bindings::BluetoothPermissionResultBinding::BluetoothPermissionDescriptor;
+use dom::bindings::codegen::Bindings::PermissionStatusBinding::{PermissionDescriptor, PermissionName};
 use dom::bindings::codegen::Bindings::PermissionsBinding::{self, PermissionsMethods};
 use dom::bindings::error::Error;
+use dom::bindings::inheritance::Castable;
 use dom::bindings::js::Root;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
+use dom::bluetoothpermissionresult::BluetoothPermissionResult;
 use dom::globalscope::GlobalScope;
 use dom::permissionstatus::{PermissionDescriptorType, PermissionStatus};
 use dom::promise::Promise;
@@ -15,7 +18,8 @@ use js::jsapi::{JSContext, JSObject};
 use js::jsval::{ObjectValue, UndefinedValue};
 use std::rc::Rc;
 
-const CONVERSION_ERROR: &'static str = "Can't convert to an IDL value of type PermissionDescriptor";
+const ROOT_DESC_CONVERSION_ERROR: &'static str = "Can't convert to an IDL value of type PermissionDescriptor";
+const BT_DESC_CONVERSION_ERROR: &'static str = "Can't convert to an IDL value of type BluetoothPermissionDescriptor";
 
 // https://w3c.github.io/permissions/#permissions
 #[dom_struct]
@@ -47,7 +51,22 @@ fn create_root_descriptor(cx: *mut JSContext,
         match PermissionDescriptor::from_jsval(cx, property.handle(), ()) {
             Ok(ConversionResult::Success(descriptor)) => Ok(descriptor),
             Ok(ConversionResult::Failure(message)) => Err(String::from(message)),
-            Err(_) => Err(String::from(CONVERSION_ERROR)),
+            Err(_) => Err(String::from(ROOT_DESC_CONVERSION_ERROR)),
+        }
+    }
+}
+
+#[allow(unsafe_code)]
+fn create_bluetooth_descriptor(cx: *mut JSContext,
+                               permission_descriptor_obj: *mut JSObject)
+                               -> Result<BluetoothPermissionDescriptor, String> {
+    rooted!(in(cx) let mut property = UndefinedValue());
+    property.handle_mut().set(ObjectValue(permission_descriptor_obj));
+    unsafe {
+        match BluetoothPermissionDescriptor::from_jsval(cx, property.handle(), ()) {
+            Ok(ConversionResult::Success(descriptor)) => Ok(descriptor),
+            Ok(ConversionResult::Failure(message)) => Err(String::from(message)),
+            Err(_) => Err(String::from(BT_DESC_CONVERSION_ERROR)),
         }
     }
 }
@@ -89,6 +108,38 @@ fn sync_default_permission_request_call(global: &GlobalScope,
     promise.resolve_native(cx, &status);
 }
 
+// https://w3c.github.io/permissions/#dom-permissions-query
+fn bluetooth_permission_query_call(global: &GlobalScope,
+                                   descriptor: BluetoothPermissionDescriptor,
+                                   promise: &Rc<Promise>,
+                                   cx: *mut JSContext) {
+    // Step 5.
+    let result = BluetoothPermissionResult::create_from_descriptor(
+                    global, PermissionDescriptorType::Bluetooth(descriptor));
+
+    // Step 6.
+    result.permission_query(&promise, cx);
+
+    // Step 7.
+    promise.resolve_native(cx, result.upcast::<PermissionStatus>());
+}
+
+// https://w3c.github.io/permissions/#dom-permissions-request
+fn bluetooth_permission_request_call(global: &GlobalScope,
+                                     descriptor: BluetoothPermissionDescriptor,
+                                     promise: &Rc<Promise>,
+                                     cx: *mut JSContext) {
+    // Step 5.
+    let result =
+        BluetoothPermissionResult::create_from_descriptor(global, PermissionDescriptorType::Bluetooth(descriptor));
+    // Step 6.
+    if let Err(err) = result.permission_request(&promise) {
+        // Step 7.
+        return promise.reject_error(cx, err);
+    }
+    // NOTE: Step 8. is in `bluetoothpermissionresult.rs` in the `handle_response` function.
+}
+
 impl PermissionsMethods for Permissions {
     #[allow(unrooted_must_root)]
     #[allow(unsafe_code)]
@@ -107,8 +158,19 @@ impl PermissionsMethods for Permissions {
         };
 
         // Step 2.
-        // TODO: Add support for not default cases.
         match root_desc.name {
+            PermissionName::Bluetooth => {
+                let type_desc = match create_bluetooth_descriptor(cx, permissionDesc) {
+                    Ok(descriptor) => descriptor,
+                    Err(message) => {
+                        p.reject_error(cx, Error::Type(message));
+                        return p;
+                    },
+                };
+                // Step 4.
+                bluetooth_permission_query_call(&self.global(), type_desc, &p, cx);
+            },
+            // TODO: Add support for other cases too.
             _ => {
                 // Step 4: TODO: Add an async implementation instead of sync_default_permission_query_call
                 sync_default_permission_query_call(&self.global(), root_desc, &p, cx);
@@ -135,8 +197,19 @@ impl PermissionsMethods for Permissions {
         };
 
         // Step 2.
-        // TODO: Add support for not default cases.
         match root_desc.name {
+            PermissionName::Bluetooth => {
+                let type_desc = match create_bluetooth_descriptor(cx, permissionDesc) {
+                    Ok(descriptor) => descriptor,
+                    Err(message) => {
+                        p.reject_error(cx, Error::Type(message));
+                        return p;
+                    },
+                };
+                // Step 4.
+                bluetooth_permission_request_call(&self.global(), type_desc, &p, cx);
+            },
+            // TODO: Add support for other cases too.
             _ => {
                 // Step 4: TODO: Add an async implementation instead of sync_default_permission_request_call
                 sync_default_permission_request_call(&self.global(), root_desc, &p, cx);

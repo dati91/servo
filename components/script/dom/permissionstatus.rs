@@ -4,6 +4,7 @@
 
 use core::clone::Clone;
 use dom::bindings::cell::DOMRefCell;
+use dom::bindings::codegen::Bindings::BluetoothPermissionResultBinding::BluetoothPermissionDescriptor;
 use dom::bindings::codegen::Bindings::EventHandlerBinding::EventHandlerNonNull;
 use dom::bindings::codegen::Bindings::PermissionStatusBinding::{self, PermissionDescriptor, PermissionName};
 use dom::bindings::codegen::Bindings::PermissionStatusBinding::{PermissionState, PermissionStatusMethods};
@@ -20,9 +21,10 @@ use js::rust::get_object_compartment;
 // Enum for storing different type of PermissionDescriptors in the same type.
 #[derive(JSTraceable, HeapSizeOf)]
 pub enum PermissionDescriptorType {
-    // TODO(zakorgy): Finish this list.
+    // NOTE(zakorgy): Other types are not yet implemented, because we only need the bluetooth related one.
     Undefined,
     Default(PermissionDescriptor),
+    Bluetooth(BluetoothPermissionDescriptor),
 }
 
 impl HeapSizeOf for PermissionDescriptor {
@@ -35,6 +37,29 @@ impl HeapSizeOf for PermissionDescriptor {
 unsafe impl JSTraceable for PermissionDescriptor {
     unsafe fn trace(&self, trc: *mut JSTracer) {
         self.name.trace(trc);
+    }
+}
+
+impl HeapSizeOf for BluetoothPermissionDescriptor {
+    fn heap_size_of_children(&self) -> usize {
+        self.parent.heap_size_of_children() +
+        self.acceptAllDevices.heap_size_of_children() +
+        self.deviceId.heap_size_of_children()// +
+        // TODO: Implement heap_size_of for these two
+        // self.filters.heap_size_of_children() +
+        // self.optionalServices.heap_size_of_children()
+    }
+}
+
+#[allow(unsafe_code)]
+unsafe impl JSTraceable for BluetoothPermissionDescriptor {
+    unsafe fn trace(&self, trc: *mut JSTracer) {
+        self.parent.trace(trc);
+        self.acceptAllDevices.trace(trc);
+        self.deviceId.trace(trc);
+        // TODO: Implement trace for these two
+        // self.filters.trace(trc);
+        // self.optionalServices.trace(trc);
     }
 }
 
@@ -61,7 +86,7 @@ impl PermissionStatus {
                            PermissionStatusBinding::Wrap)
     }
 
-    fn set_query(&self, permission_descriptor: PermissionDescriptorType) -> Root<PermissionStatus>  {
+    pub fn set_query(&self, permission_descriptor: PermissionDescriptorType) -> Root<PermissionStatus>  {
         *self.query.borrow_mut() = permission_descriptor;
         Root::from_ref(self)
     }
@@ -113,6 +138,7 @@ fn get_descriptors_permission_state(descriptor: &PermissionDescriptorType, obj: 
     let name = match descriptor {
         // TODO(zakorgy): Finish this list.
         &PermissionDescriptorType::Default(ref desc) => desc.name,
+        &PermissionDescriptorType::Bluetooth(ref desc) => desc.parent.name,
         &PermissionDescriptorType::Undefined => return PermissionState::Denied,
     };
 
@@ -126,7 +152,6 @@ fn get_descriptors_permission_state(descriptor: &PermissionDescriptorType, obj: 
     // TODO: Step 4: Make interaction with the user to discover the user's intent.
     PermissionState::Granted
 }
-
 
 // https://w3c.github.io/permissions/#allowed-in-non-secure-contexts
 fn allowed_in_nonsecure_contexts(permission_name: PermissionName) -> bool {
