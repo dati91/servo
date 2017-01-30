@@ -253,6 +253,9 @@ impl BluetoothManager {
                 BluetoothRequest::IsRepresentedDeviceNull(id, sender) => {
                     let _ = sender.send(!self.device_is_cached(&id));
                 }
+                BluetoothRequest::MatchesFilter(id, filters, sender) => {
+                    let _ = sender.send(self.device_matches_filter(&id, &filters));
+                }
                 BluetoothRequest::Exit => {
                     break
                 },
@@ -420,6 +423,17 @@ impl BluetoothManager {
 
     fn device_is_cached(&self, device_id: &str) -> bool {
         self.cached_devices.contains_key(device_id) && self.address_to_id.values().any(|v| v == device_id)
+    }
+
+    fn device_matches_filter(&mut self,
+                             device_id: &str,
+                             filters: &BluetoothScanfilterSequence)
+                             -> BluetoothResult<bool> {
+        let mut adapter = try!(self.get_adapter());
+        match self.get_device(&mut adapter, device_id) {
+            Some(ref device) => Ok(matches_filters(device, filters)),
+            None => Ok(false),
+        }
     }
 
     // Service

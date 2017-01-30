@@ -38,6 +38,7 @@ pub struct BluetoothDevice {
     name: Option<DOMString>,
     gatt: MutNullableJS<BluetoothRemoteGATTServer>,
     context: JS<Bluetooth>,
+    represented_device: MutNullableJS<BluetoothDevice>,
     attribute_instance_map: (DOMRefCell<HashMap<String, JS<BluetoothRemoteGATTService>>>,
                              DOMRefCell<HashMap<String, JS<BluetoothRemoteGATTCharacteristic>>>,
                              DOMRefCell<HashMap<String, JS<BluetoothRemoteGATTDescriptor>>>),
@@ -55,6 +56,7 @@ impl BluetoothDevice {
             name: name,
             gatt: Default::default(),
             context: JS::from_ref(context),
+            represented_device: MutNullableJS::new(None),
             attribute_instance_map: (DOMRefCell::new(HashMap::new()),
                                      DOMRefCell::new(HashMap::new()),
                                      DOMRefCell::new(HashMap::new())),
@@ -67,15 +69,25 @@ impl BluetoothDevice {
                name: Option<DOMString>,
                context: &Bluetooth)
                -> Root<BluetoothDevice> {
-        reflect_dom_object(box BluetoothDevice::new_inherited(id,
+        let d = reflect_dom_object(box BluetoothDevice::new_inherited(id,
                                                               name,
                                                               context),
                            global,
-                           BluetoothDeviceBinding::Wrap)
+                           BluetoothDeviceBinding::Wrap);
+        d.set_represented_device(Some(&d));
+        d
     }
 
     fn get_context(&self) -> Root<Bluetooth> {
         Root::from_ref(&self.context)
+    }
+
+    pub fn get_represented_device(&self) -> Option<Root<BluetoothDevice>> {
+        self.represented_device.get()
+    }
+
+    pub fn set_represented_device(&self, device: Option<&BluetoothDevice>) {
+        self.represented_device.set(device)
     }
 
     pub fn get_or_create_service(&self,

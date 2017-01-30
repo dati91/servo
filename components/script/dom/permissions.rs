@@ -8,6 +8,8 @@ use dom::bindings::codegen::Bindings::PermissionsBinding::{self, PermissionsMeth
 use dom::bindings::error::Error;
 use dom::bindings::js::Root;
 use dom::bindings::reflector::{DomObject, Reflector, reflect_dom_object};
+use dom::bluetooth::Bluetooth;
+use dom::bluetoothpermissionresult::BluetoothPermissionResult;
 use dom::globalscope::GlobalScope;
 use dom::permissionstatus::PermissionStatus;
 use dom::promise::Promise;
@@ -73,6 +75,20 @@ impl PermissionsMethods for Permissions {
 
         // Step 2.
         match root_desc.name {
+            PermissionName::Bluetooth => {
+                let bluetooth_desc = match Bluetooth::create_descriptor(cx, permissionDesc) {
+                    Ok(descriptor) => descriptor,
+                    Err(error) => {
+                        p.reject_error(cx, error);
+                        return p;
+                    },
+                };
+                // Step 5.
+                let result = BluetoothPermissionResult::new(&self.global(), &status);
+                // Step 6.
+                Bluetooth::permission_query(cx, &p, &bluetooth_desc, &result);
+                // Step 7. in permission_query
+            },
             _ => {
                 // Step 6.
                 Permissions::permission_query(cx, &p, &root_desc, &status);
@@ -105,6 +121,20 @@ impl PermissionsMethods for Permissions {
 
         // Step 2.
         match root_desc.name {
+            PermissionName::Bluetooth => {
+                let bluetooth_desc = match Bluetooth::create_descriptor(cx, permissionDesc) {
+                    Ok(descriptor) => descriptor,
+                    Err(error) => {
+                        p.reject_error(cx, error);
+                        return p;
+                    },
+                };
+                // Step 5.
+                let result = BluetoothPermissionResult::new(&self.global(), &status);
+                // Step 6.
+                Bluetooth::permission_request(cx, &p, &bluetooth_desc, &result);
+                // Step 7 - 8. in permission_request
+            },
             _ => {
                 // Step 6.
                 Permissions::permission_request(cx, &p, &root_desc, &status);
@@ -135,6 +165,19 @@ impl PermissionsMethods for Permissions {
 
         // Step 2.
         match root_desc.name {
+            PermissionName::Bluetooth => {
+                let bluetooth_desc = match Bluetooth::create_descriptor(cx, permissionDesc) {
+                    Ok(descriptor) => descriptor,
+                    Err(error) => {
+                        let p = Promise::new(&self.global());
+                        p.reject_error(cx, error);
+                        return p;
+                    },
+                };
+                let result = BluetoothPermissionResult::new(&self.global(), &status);
+                // Step 3 - 4. in permission_revoke
+                Bluetooth::permission_revoke(&bluetooth_desc, &result);
+            },
             _ => {
                 Permissions::permission_revoke(&root_desc, &status);
             },
