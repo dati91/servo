@@ -5,6 +5,7 @@
 #![deny(unsafe_code)]
 
 extern crate euclid;
+extern crate gfx_hal;
 extern crate gfx_traits;
 #[cfg(feature = "gleam")]
 extern crate gleam;
@@ -26,6 +27,8 @@ extern crate style_traits;
 extern crate time;
 extern crate webrender;
 extern crate webrender_api;
+#[cfg(feature = "winit")]
+extern crate winit;
 
 pub use compositor_thread::CompositorProxy;
 pub use compositor::IOCompositor;

@@ -37,13 +37,15 @@ unstable = ["libservo/unstable"]
 backtrace = "0.3"
 bitflags = "1.0"
 euclid = "0.17"
-gleam = "0.5"
-glutin = "0.13"
+#gleam = "0.5"
+#glutin = "0.13"
 lazy_static = "1"
 libservo = {path = "../../components/servo"}
 log = "0.4"
 tinyfiledialogs = "3.0"
-winit = "0.11.2"
+gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx.git" }
+gfx-hal = { git = "https://github.com/gfx-rs/gfx.git" }
+winit = "0.13"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 sig = "0.1"

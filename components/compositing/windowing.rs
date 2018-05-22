@@ -18,6 +18,8 @@ use std::fmt::{Debug, Error, Formatter};
 use std::rc::Rc;
 use style_traits::DevicePixel;
 use webrender_api::{DeviceIntPoint, DevicePoint, DeviceUintSize, DeviceUintRect, ScrollLocation};
+#[cfg(feature = "winit")]
+use winit;
 
 #[derive(Clone)]
 pub enum MouseWindowEvent {
@@ -141,6 +143,8 @@ pub trait WindowMethods {
     /// will want to avoid blocking on UI events, and just
     /// run the event loop at the vsync interval.
     fn set_animation_state(&self, _state: AnimationState);
+    #[cfg(feature = "winit")]
+    fn get_window(&self) -> &winit::Window;
 }
 
 #[derive(Clone, Copy, Debug)]

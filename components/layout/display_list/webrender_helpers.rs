@@ -217,7 +217,7 @@ impl WebRenderDisplayItemConverter for DisplayItem {
                 builder.push_stacking_context(
                     &webrender_api::LayoutPrimitiveInfo::new(stacking_context.bounds),
                     None,
-                    stacking_context.scroll_policy,
+                    //stacking_context.scroll_policy,
                     stacking_context.transform.map(Into::into),
                     stacking_context.transform_style,
                     stacking_context.perspective,

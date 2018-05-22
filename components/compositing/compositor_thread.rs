@@ -6,6 +6,7 @@
 
 use SendableFrameTree;
 use compositor::CompositingReason;
+use gfx_hal;
 use gfx_traits::Epoch;
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::{InputMethodType, Key, KeyModifiers, KeyState, PipelineId, TopLevelBrowsingContextId};
@@ -260,7 +261,7 @@ impl Debug for EmbedderMsg {
 }
 
 /// Data used to construct a compositor.
-pub struct InitialCompositorState {
+pub struct InitialCompositorState<Back: gfx_hal::Backend> {
     /// A channel to the compositor.
     pub sender: CompositorProxy,
     /// A port on which messages inbound to the compositor can be received.
@@ -272,7 +273,7 @@ pub struct InitialCompositorState {
     /// A channel to the memory profiler thread.
     pub mem_profiler_chan: mem::ProfilerChan,
     /// Instance of webrender API
-    pub webrender: webrender::Renderer,
+    pub webrender: webrender::Renderer<Back>,
     pub webrender_document: webrender_api::DocumentId,
     pub webrender_api: webrender_api::RenderApi,
 }
