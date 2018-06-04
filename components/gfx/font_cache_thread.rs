@@ -177,14 +177,16 @@ impl FontCache {
                                             .entry((font_key, size))
                                             .or_insert_with(|| {
                                                 let key = webrender_api.generate_font_instance_key();
-                                                let mut updates = webrender_api::ResourceUpdates::new();
-                                                updates.add_font_instance(key,
-                                                                          font_key,
-                                                                          size,
-                                                                          None,
-                                                                          None,
-                                                                          Vec::new());
-                                                webrender_api.update_resources(updates);
+                                                let mut update = webrender_api::ResourceUpdate::AddFontInstance(
+                                                    webrender_api::AddFontInstance {
+                                                        key,
+                                                        font_key,
+                                                        glyph_size: size,
+                                                        options: None,
+                                                        platform_options: None,
+                                                        variations: Vec::new(),
+                                                    });
+                                                webrender_api.update_resources(vec!(update));
                                                 key
                                             });
 
@@ -373,11 +375,11 @@ impl FontCache {
 
         let font_key = *webrender_fonts.entry(template.identifier.clone()).or_insert_with(|| {
             let font_key = webrender_api.generate_font_key();
-            let mut updates = webrender_api::ResourceUpdates::new();
+            let mut updates = Vec::new();
             match (template.bytes_if_in_memory(), template.native_font()) {
-                (Some(bytes), _) => updates.add_raw_font(font_key, bytes, 0),
-                (None, Some(native_font)) => updates.add_native_font(font_key, native_font),
-                (None, None) => updates.add_raw_font(font_key, template.bytes().clone(), 0),
+                (Some(bytes), _) => updates.push(webrender_api::ResourceUpdate::AddFont(webrender_api::AddFont::Raw(font_key, bytes, 0))),
+                (None, Some(native_font)) => updates.push(webrender_api::ResourceUpdate::AddFont(webrender_api::AddFont::Native(font_key, native_font))),
+                (None, None) => updates.push(webrender_api::ResourceUpdate::AddFont(webrender_api::AddFont::Raw(font_key, template.bytes().clone(), 0))),
             }
             webrender_api.update_resources(updates);
             font_key

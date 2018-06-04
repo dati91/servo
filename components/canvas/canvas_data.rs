@@ -429,8 +429,7 @@ impl<'a> CanvasData<'a> {
             let size = self.drawtarget.get_size();
 
             let descriptor = webrender_api::ImageDescriptor {
-                width: size.width as u32,
-                height: size.height as u32,
+                size: webrender_api::DeviceUintSize::new(size.width as u32,size.height as u32),
                 stride: None,
                 format: webrender_api::ImageFormat::BGRA8,
                 offset: 0,
@@ -439,28 +438,36 @@ impl<'a> CanvasData<'a> {
             };
             let data = webrender_api::ImageData::Raw(Arc::new(element.into()));
 
-            let mut updates = webrender_api::ResourceUpdates::new();
+            let mut updates = Vec::new();
 
             match self.image_key {
                 Some(image_key) => {
                     debug!("Updating image {:?}.", image_key);
-                    updates.update_image(image_key,
-                                         descriptor,
-                                         data,
-                                         None);
+                    updates.push(webrender_api::ResourceUpdate::AddImage(
+                        webrender_api::AddImage {
+                            key: image_key,
+                            descriptor,
+                            data,
+                            tiling: None
+                        }
+                    ));
                 }
                 None => {
                     self.image_key = Some(self.webrender_api.generate_image_key());
                     debug!("New image {:?}.", self.image_key);
-                    updates.add_image(self.image_key.unwrap(),
-                                      descriptor,
-                                      data,
-                                      None);
+                    updates.push(webrender_api::ResourceUpdate::AddImage(
+                        webrender_api::AddImage {
+                            key: self.image_key.unwrap(),
+                            descriptor,
+                            data,
+                            tiling: None,
+                        }
+                    ));
                 }
             }
 
             if let Some(image_key) = mem::replace(&mut self.very_old_image_key, self.old_image_key.take()) {
-                updates.delete_image(image_key);
+                updates.push(webrender_api::ResourceUpdate::DeleteImage(image_key));
             }
 
             self.webrender_api.update_resources(updates);
@@ -660,13 +667,13 @@ impl<'a> CanvasData<'a> {
 
 impl<'a> Drop for CanvasData<'a> {
     fn drop(&mut self) {
-        let mut updates = webrender_api::ResourceUpdates::new();
+        let mut updates = Vec::new();
 
         if let Some(image_key) = self.old_image_key.take() {
-            updates.delete_image(image_key);
+            updates.push(webrender_api::ResourceUpdate::DeleteImage(image_key));
         }
         if let Some(image_key) = self.very_old_image_key.take() {
-            updates.delete_image(image_key);
+            updates.push(webrender_api::ResourceUpdate::DeleteImage(image_key));
         }
 
         self.webrender_api.update_resources(updates);

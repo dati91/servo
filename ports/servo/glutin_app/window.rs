@@ -225,7 +225,7 @@ impl Window {
             let (width, height) = winit_window.get_inner_size().expect("Failed to get window inner size.");
             inner_size = TypedSize2D::new(width, height);
 
-            winit_window.show();
+            //winit_window.show();
 
             WindowKind::Window(winit_window, RefCell::new(events_loop))
         };

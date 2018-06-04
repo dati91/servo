@@ -45,7 +45,7 @@ log = "0.4"
 tinyfiledialogs = "3.0"
 gfx-backend-vulkan = { git = "https://github.com/gfx-rs/gfx.git" }
 gfx-hal = { git = "https://github.com/gfx-rs/gfx.git" }
-winit = "0.13"
+winit = "0.15"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 sig = "0.1"

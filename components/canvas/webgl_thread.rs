@@ -268,10 +268,10 @@ impl<VR: WebVRRenderHandler + 'static, OB: WebGLThreadObserver> WebGLThread<VR, 
     fn remove_webgl_context(&mut self, context_id: WebGLContextId) {
         // Release webrender image keys.
         if let Some(info) = self.cached_context_info.remove(&context_id) {
-            let mut updates = webrender_api::ResourceUpdates::new();
+            let mut updates = Vec::new();
 
             if let Some(image_key) = info.image_key {
-                updates.delete_image(image_key);
+                updates.push(webrender_api::ResourceUpdate::DeleteImage(image_key));
             }
 
             self.webrender_api.update_resources(updates)
@@ -423,11 +423,15 @@ impl<VR: WebVRRenderHandler + 'static, OB: WebGLThreadObserver> WebGLThread<VR, 
         let data = Self::external_image_data(context_id);
 
         let image_key = webrender_api.generate_image_key();
-        let mut updates = webrender_api::ResourceUpdates::new();
-        updates.add_image(image_key,
-                          descriptor,
-                          data,
-                          None);
+        let mut updates = Vec::new();
+        updates.push(webrender_api::ResourceUpdate::AddImage(
+            webrender_api::AddImage {
+                key: image_key,
+                descriptor,
+                data,
+                tiling: None,
+            }
+        ));
         webrender_api.update_resources(updates);
 
         image_key
@@ -442,11 +446,15 @@ impl<VR: WebVRRenderHandler + 'static, OB: WebGLThreadObserver> WebGLThread<VR, 
         let descriptor = Self::image_descriptor(size, alpha);
         let data = Self::external_image_data(context_id);
 
-        let mut updates = webrender_api::ResourceUpdates::new();
-        updates.update_image(image_key,
-                             descriptor,
-                             data,
-                             None);
+        let mut updates = Vec::new();
+        updates.push(webrender_api::ResourceUpdate::UpdateImage(
+            webrender_api::UpdateImage {
+                key: image_key,
+                descriptor,
+                data,
+                dirty_rect: None,
+            }
+        ));
         webrender_api.update_resources(updates);
     }
 
@@ -459,11 +467,15 @@ impl<VR: WebVRRenderHandler + 'static, OB: WebGLThreadObserver> WebGLThread<VR, 
         let data = webrender_api::ImageData::new(data);
 
         let image_key = webrender_api.generate_image_key();
-        let mut updates = webrender_api::ResourceUpdates::new();
-        updates.add_image(image_key,
-                          descriptor,
-                          data,
-                          None);
+        let mut updates = Vec::new();
+        updates.push(webrender_api::ResourceUpdate::AddImage(
+            webrender_api::AddImage {
+                key: image_key,
+                descriptor,
+                data,
+                tiling: None
+            }
+        ));
         webrender_api.update_resources(updates);
 
         image_key
@@ -478,19 +490,21 @@ impl<VR: WebVRRenderHandler + 'static, OB: WebGLThreadObserver> WebGLThread<VR, 
         let descriptor = Self::image_descriptor(size, alpha);
         let data = webrender_api::ImageData::new(data);
 
-        let mut updates = webrender_api::ResourceUpdates::new();
-        updates.update_image(image_key,
-                             descriptor,
-                             data,
-                             None);
+        let mut updates = Vec::new();
+        updates.push(webrender_api::ResourceUpdate::UpdateImage(
+            webrender_api::UpdateImage{
+                key: image_key,
+                descriptor,
+                data,
+                dirty_rect: None,
+            }));
         webrender_api.update_resources(updates);
     }
 
     /// Helper function to create a `webrender_api::ImageDescriptor`.
     fn image_descriptor(size: Size2D<i32>, alpha: bool) -> webrender_api::ImageDescriptor {
         webrender_api::ImageDescriptor {
-            width: size.width as u32,
-            height: size.height as u32,
+            size: webrender_api::DeviceUintSize::new(size.width as u32, size.height as u32),
             stride: None,
             format: webrender_api::ImageFormat::BGRA8,
             offset: 0,

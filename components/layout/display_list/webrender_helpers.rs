@@ -208,7 +208,7 @@ impl WebRenderDisplayItemConverter for DisplayItem {
                 builder.pop_all_shadows();
             },
             DisplayItem::Iframe(ref item) => {
-                builder.push_iframe(&self.prim_info(), item.iframe.to_webrender());
+                builder.push_iframe(&self.prim_info(), item.iframe.to_webrender(), true);
             },
             DisplayItem::PushStackingContext(ref item) => {
                 let stacking_context = &item.stacking_context;
