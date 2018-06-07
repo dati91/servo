@@ -20,7 +20,8 @@ opt-level = 3
 #"webrender_api" = { git = 'https://github.com/szeged/webrender' }
 
 [replace]
-"https://github.com/servo/webrender#0.57.2" = { git = 'https://github.com/szeged/webrender' }
-"https://github.com/servo/webrender#webrender_api:0.57.2" = { git = 'https://github.com/szeged/webrender' }
-"https://github.com/gfx-rs/gfx.git#gfx-hal:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="8d2b93a8dfd9c99b7cbec703924a628d56cc9c73"}
-"https://github.com/gfx-rs/gfx.git#gfx-backend-vulkan:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="8d2b93a8dfd9c99b7cbec703924a628d56cc9c73" }
+"https://github.com/servo/webrender#0.57.2" = { git = "https://github.com/dati91/webrender.git", branch="wr_for_servo" }
+"https://github.com/servo/webrender#webrender_api:0.57.2" = { git = "https://github.com/dati91/webrender.git", branch="wr_for_servo" }
+"https://github.com/gfx-rs/gfx.git#gfx-hal:0.1.0" = { git = "https://github.com/dati91/gfx.git", branch="gfx_for_servo" }
+"https://github.com/gfx-rs/gfx.git#gfx-backend-vulkan:0.1.0" = { git = "https://github.com/dati91/gfx.git", branch="gfx_for_servo" }
+"https://github.com/gfx-rs/gfx.git#gfx-backend-dx12:0.1.0" = { git = "https://github.com/dati91/gfx.git", branch="gfx_for_servo" }
