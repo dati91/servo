@@ -25,7 +25,10 @@ extern crate euclid;
 #[cfg(target_os = "windows")] extern crate gdi32;
 //extern crate gleam;
 //extern crate glutin;
+#[cfg(feature = "vulkan")]
 extern crate gfx_backend_vulkan as back;
+#[cfg(feature = "dx12")]
+extern crate gfx_backend_dx12 as back;
 extern crate gfx_hal;
 #[cfg(not(target_os = "android"))]
 #[macro_use] extern crate lazy_static;
