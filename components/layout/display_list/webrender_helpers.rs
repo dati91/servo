@@ -208,7 +208,7 @@ impl WebRenderDisplayItemConverter for DisplayItem {
                 builder.pop_all_shadows();
             },
             DisplayItem::Iframe(ref item) => {
-                builder.push_iframe(&self.prim_info(), item.iframe.to_webrender());
+                builder.push_iframe(&self.prim_info(), item.iframe.to_webrender(), true);
             },
             DisplayItem::PushStackingContext(ref item) => {
                 let stacking_context = &item.stacking_context;
@@ -217,7 +217,7 @@ impl WebRenderDisplayItemConverter for DisplayItem {
                 builder.push_stacking_context(
                     &webrender_api::LayoutPrimitiveInfo::new(stacking_context.bounds),
                     None,
-                    stacking_context.scroll_policy,
+                    //stacking_context.scroll_policy,
                     stacking_context.transform.map(Into::into),
                     stacking_context.transform_style,
                     stacking_context.perspective,
