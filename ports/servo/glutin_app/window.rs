@@ -187,7 +187,7 @@ impl Window {
 
         let screen_size;
         let inner_size;
-        let window_kind = if opts::get().headless {
+        let window_kind = if false { //opts::get().headless {
             screen_size = TypedSize2D::new(width, height);
             inner_size = TypedSize2D::new(width, height);
             WindowKind::Headless(HeadlessContext::new(width, height))
@@ -198,7 +198,7 @@ impl Window {
                 .with_decorations(!opts::get().no_native_titlebar)
                 .with_transparency(opts::get().no_native_titlebar)
                 .with_dimensions(width, height)
-                .with_visibility(visible)
+                .with_visibility(false)
                 .with_multitouch();
 
             /*window_builder = builder_with_platform_options(window_builder);

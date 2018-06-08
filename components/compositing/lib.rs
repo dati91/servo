@@ -9,7 +9,7 @@ extern crate gfx_hal;
 extern crate gfx_traits;
 #[cfg(feature = "gleam")]
 extern crate gleam;
-#[cfg(feature = "gleam")]
+//#[cfg(feature = "gleam")]
 extern crate image;
 extern crate ipc_channel;
 extern crate libc;

@@ -11,8 +11,8 @@ use gfx_hal;
 use gfx_traits::Epoch;
 #[cfg(feature = "gleam")]
 use gl;
-#[cfg(feature = "gleam")]
-use image::{DynamicImage, ImageFormat};
+//#[cfg(feature = "gleam")]
+use image::{DynamicImage, ImageFormat, RgbaImage};
 use ipc_channel::ipc;
 use libc::c_void;
 use msg::constellation_msg::{PipelineId, PipelineIndex, PipelineNamespaceId};
@@ -41,7 +41,7 @@ use time::{now, precise_time_ns, precise_time_s};
 use touch::{TouchHandler, TouchAction};
 use webrender;
 use webrender_api::{self, DeviceIntPoint, DevicePoint, HitTestFlags, HitTestResult};
-use webrender_api::{LayoutVector2D, ScrollLocation};
+use webrender_api::{LayoutVector2D, ScrollLocation, DeviceUintRect, DeviceUintPoint, DeviceUintSize};
 use windowing::{self, EmbedderCoordinates, MouseWindowEvent, WebRenderDebugOption, WindowMethods};
 
 
@@ -1278,6 +1278,33 @@ impl<Window: WindowMethods, Back: gfx_hal::Backend> IOCompositor<Window, Back> {
                 });
                 None
             }
+            #[cfg(not(feature = "gleam"))]
+            CompositeTarget::PngFile => {
+                let width = width.get();
+                let height = height.get();
+                let pixels = self.webrender.read_pixels_rgba8(
+                    DeviceUintRect::new(
+                        DeviceUintPoint::new(0, 0),
+                        DeviceUintSize::new(width as _, height as _),
+                    )
+                );
+                let img = RgbaImage::from_raw(width as u32, height as u32, pixels).unwrap();
+                profile(ProfilerCategory::ImageSaving, None, self.time_profiler_chan.clone(), || {
+                    match opts::get().output_file.as_ref() {
+                        Some(path) => match File::create(path) {
+                            Ok(mut file) => {
+                                let dynamic_image = DynamicImage::ImageRgba8(img);
+                                if let Err(e) = dynamic_image.save(&mut file, ImageFormat::PNG) {
+                                    error!("Failed to save {} ({}).", path, e);
+                                }
+                            },
+                            Err(e) => error!("Failed to create {} ({}).", path, e),
+                        },
+                        None => error!("No file specified."),
+                    }
+                });
+                None
+            },
             #[cfg(not(feature = "gleam"))]
             _ => None,
         };
