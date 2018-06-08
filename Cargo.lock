@@ -1113,7 +1113,7 @@ dependencies = [
 [[package]]
 name = "gfx-backend-dx12"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx.git#909b13cffd0d548bae41e785db255537094c6c0f"
+source = "git+https://github.com/gfx-rs/gfx.git#ff6d6e3d007adbcbcda3ebbb1843650e76e9051c"
 replace = "gfx-backend-dx12 0.1.0 (git+https://github.com/dati91/gfx.git?branch=gfx_for_servo)"
 
 [[package]]
@@ -1137,7 +1137,7 @@ dependencies = [
 [[package]]
 name = "gfx-backend-vulkan"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx.git#909b13cffd0d548bae41e785db255537094c6c0f"
+source = "git+https://github.com/gfx-rs/gfx.git#ff6d6e3d007adbcbcda3ebbb1843650e76e9051c"
 replace = "gfx-backend-vulkan 0.1.0 (git+https://github.com/dati91/gfx.git?branch=gfx_for_servo)"
 
 [[package]]
@@ -1154,7 +1154,7 @@ dependencies = [
 [[package]]
 name = "gfx-hal"
 version = "0.1.0"
-source = "git+https://github.com/gfx-rs/gfx.git#909b13cffd0d548bae41e785db255537094c6c0f"
+source = "git+https://github.com/gfx-rs/gfx.git#ff6d6e3d007adbcbcda3ebbb1843650e76e9051c"
 replace = "gfx-hal 0.1.0 (git+https://github.com/dati91/gfx.git?branch=gfx_for_servo)"
 
 [[package]]
