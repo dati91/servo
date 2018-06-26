@@ -7,8 +7,8 @@
 use euclid::{Length, TypedPoint2D, TypedVector2D, TypedScale, TypedSize2D};
 #[cfg(target_os = "windows")]
 use gdi32;
-use gleam::gl;
-use glutin::{Api, ContextBuilder, GlContext, GlRequest, GlWindow};
+//use gleam::gl;
+//use glutin::{Api, ContextBuilder, GlContext, GlRequest, GlWindow};
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use osmesa_sys;
 use servo::compositing::windowing::{AnimationState, MouseWindowEvent, WindowEvent};
@@ -64,7 +64,7 @@ fn builder_with_platform_options(builder: winit::WindowBuilder) -> winit::Window
     builder
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
+/*#[cfg(any(target_os = "linux", target_os = "macos"))]
 struct HeadlessContext {
     width: u32,
     height: u32,
@@ -72,14 +72,14 @@ struct HeadlessContext {
     _buffer: Vec<u32>,
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "macos")))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]*/
 struct HeadlessContext {
     width: u32,
     height: u32,
 }
 
 impl HeadlessContext {
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    /*#[cfg(any(target_os = "linux", target_os = "macos"))]
     fn new(width: u32, height: u32) -> HeadlessContext {
         let mut attribs = Vec::new();
 
@@ -116,7 +116,7 @@ impl HeadlessContext {
         }
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]*/
     fn new(width: u32, height: u32) -> HeadlessContext {
         HeadlessContext {
             width: width,
@@ -124,7 +124,7 @@ impl HeadlessContext {
         }
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    /*#[cfg(any(target_os = "linux", target_os = "macos"))]
     fn get_proc_address(s: &str) -> *const c_void {
         let c_str = CString::new(s).expect("Unable to create CString");
         unsafe {
@@ -132,14 +132,14 @@ impl HeadlessContext {
         }
     }
 
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]*/
     fn get_proc_address(_: &str) -> *const c_void {
         ptr::null() as *const _
     }
 }
 
 enum WindowKind {
-    Window(GlWindow, RefCell<winit::EventsLoop>),
+    Window(winit::Window, RefCell<winit::EventsLoop>),
     Headless(HeadlessContext),
 }
 
@@ -156,7 +156,7 @@ pub struct Window {
     last_pressed_key: Cell<Option<Key>>,
     animation_state: Cell<AnimationState>,
     fullscreen: Cell<bool>,
-    gl: Rc<gl::Gl>,
+    //gl: Rc<gl::Gl>,
     suspended: Cell<bool>,
 }
 
@@ -190,7 +190,7 @@ impl Window {
 
         let screen_size;
         let inner_size;
-        let window_kind = if opts::get().headless {
+        let window_kind = if false { //opts::get().headless {
             screen_size = TypedSize2D::new(width, height);
             inner_size = TypedSize2D::new(width, height);
             WindowKind::Headless(HeadlessContext::new(width, height))
@@ -213,7 +213,7 @@ impl Window {
 
             window_builder = builder_with_platform_options(window_builder);
 
-            let mut context_builder = ContextBuilder::new()
+            /*let mut context_builder = ContextBuilder::new()
                 .with_gl(Window::gl_version())
                 .with_vsync(opts::get().enable_vsync);
 
@@ -226,7 +226,8 @@ impl Window {
 
             unsafe {
                 glutin_window.context().make_current().expect("Couldn't make window current");
-            }
+            }*/
+            let winit_window = window_builder.build(&events_loop).expect("Failed to create window.");
 
             let PhysicalSize {
                 width: screen_width,
@@ -235,15 +236,15 @@ impl Window {
             screen_size = TypedSize2D::new(screen_width as u32, screen_height as u32);
             // TODO(ajeffrey): can this fail?
             let LogicalSize { width, height } =
-                glutin_window.get_inner_size().expect("Failed to get window inner size.");
+                winit_window.get_inner_size().expect("Failed to get window inner size.");
             inner_size = TypedSize2D::new(width as u32, height as u32);
 
-            glutin_window.show();
+            winit_window.show();
 
-            WindowKind::Window(glutin_window, RefCell::new(events_loop))
+            WindowKind::Window(winit_window, RefCell::new(events_loop))
         };
 
-        let gl = match window_kind {
+        /*let gl = match window_kind {
             WindowKind::Window(ref window, ..) => {
                 match gl::GlType::default() {
                     gl::GlType::Gl => {
@@ -275,7 +276,7 @@ impl Window {
 
         gl.clear_color(0.6, 0.6, 0.6, 1.0);
         gl.clear(gl::COLOR_BUFFER_BIT);
-        gl.finish();
+        gl.finish();*/
 
         let window = Window {
             kind: window_kind,
@@ -287,7 +288,7 @@ impl Window {
             key_modifiers: Cell::new(KeyModifiers::empty()),
 
             last_pressed_key: Cell::new(None),
-            gl: gl.clone(),
+            //gl: gl.clone(),
             animation_state: Cell::new(AnimationState::Idle),
             fullscreen: Cell::new(false),
             inner_size: Cell::new(inner_size),
@@ -295,7 +296,7 @@ impl Window {
             suspended: Cell::new(false),
         };
 
-        window.present();
+        //window.present();
 
         Rc::new(window)
     }
@@ -401,7 +402,7 @@ impl Window {
         }
     }
 
-    #[cfg(not(any(target_arch = "arm", target_arch = "aarch64")))]
+    /*#[cfg(not(any(target_arch = "arm", target_arch = "aarch64")))]
     fn gl_version() -> GlRequest {
         return GlRequest::Specific(Api::OpenGl, (3, 2));
     }
@@ -409,7 +410,7 @@ impl Window {
     #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
     fn gl_version() -> GlRequest {
         GlRequest::Specific(Api::OpenGlEs, (3, 0))
-    }
+    }*/
 
     fn handle_received_character(&self, ch: char) {
         let last_key = if let Some(key) = self.last_pressed_key.get() {
@@ -545,8 +546,8 @@ impl Window {
                 // width and height are DeviceIndependentPixel.
                 // window.resize() takes DevicePixel.
                 if let WindowKind::Window(ref window, _) = self.kind {
-                    let size = size.to_physical(self.hidpi_factor().get() as f64);
-                    window.resize(size);
+                    //let size = size.to_physical(self.hidpi_factor().get() as f64);
+                    window.set_inner_size(size.into());
                 }
                 // window.set_inner_size() takes DeviceIndependentPixel.
                 let (width, height) = size.into();
@@ -679,12 +680,19 @@ impl Window {
             WindowKind::Headless(..) => {}
         }
     }
+
+    pub fn get_window(&self) -> &winit::Window {
+        match self.kind {
+            WindowKind::Window(ref window, ..) => return window,
+            WindowKind::Headless(..) => unreachable!(),
+        }
+    }
 }
 
 impl WindowMethods for Window {
-    fn gl(&self) -> Rc<gl::Gl> {
+    /*fn gl(&self) -> Rc<gl::Gl> {
         self.gl.clone()
-    }
+    }*/
 
     fn get_coordinates(&self) -> EmbedderCoordinates {
         let dpr = self.hidpi_factor();
@@ -726,7 +734,7 @@ impl WindowMethods for Window {
         }
     }
 
-    fn present(&self) {
+    /*fn present(&self) {
         match self.kind {
             WindowKind::Window(ref window, ..) => {
                 if let Err(err) = window.swap_buffers() {
@@ -735,7 +743,7 @@ impl WindowMethods for Window {
             }
             WindowKind::Headless(..) => {}
         }
-    }
+    }*/
 
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker> {
         struct GlutinEventLoopWaker {

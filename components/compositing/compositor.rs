@@ -7,11 +7,9 @@ use SendableFrameTree;
 use compositor_thread::{CompositorProxy, CompositorReceiver};
 use compositor_thread::{InitialCompositorState, Msg};
 use euclid::{TypedPoint2D, TypedVector2D, TypedScale};
+use gfx_hal;
 use gfx_traits::Epoch;
-#[cfg(feature = "gleam")]
-use gl;
-#[cfg(feature = "gleam")]
-use image::{DynamicImage, ImageFormat};
+use image::{DynamicImage, ImageFormat, RgbaImage};
 use ipc_channel::ipc;
 use libc::c_void;
 use msg::constellation_msg::{PipelineId, PipelineIndex, PipelineNamespaceId};
@@ -40,7 +38,7 @@ use time::{now, precise_time_ns, precise_time_s};
 use touch::{TouchHandler, TouchAction};
 use webrender;
 use webrender_api::{self, DeviceIntPoint, DevicePoint, HitTestFlags, HitTestResult};
-use webrender_api::{LayoutVector2D, ScrollLocation};
+use webrender_api::{LayoutVector2D, ScrollLocation, DeviceUintRect, DeviceUintPoint, DeviceUintSize};
 use windowing::{self, EmbedderCoordinates, MouseWindowEvent, WebRenderDebugOption, WindowMethods};
 
 
@@ -100,7 +98,7 @@ impl FrameTreeId {
 enum LayerPixel {}
 
 /// NB: Never block on the constellation, because sometimes the constellation blocks on us.
-pub struct IOCompositor<Window: WindowMethods> {
+pub struct IOCompositor<Window: WindowMethods, Back: gfx_hal::Backend> {
     /// The application window.
     pub window: Rc<Window>,
 
@@ -173,7 +171,7 @@ pub struct IOCompositor<Window: WindowMethods> {
     in_scroll_transaction: Option<Instant>,
 
     /// The webrender renderer.
-    webrender: webrender::Renderer,
+    webrender: webrender::Renderer<Back>,
 
     /// The active webrender document.
     webrender_document: webrender_api::DocumentId,
@@ -291,8 +289,8 @@ impl webrender_api::RenderNotifier for RenderNotifier {
     }
 }
 
-impl<Window: WindowMethods> IOCompositor<Window> {
-    fn new(window: Rc<Window>, state: InitialCompositorState) -> Self {
+impl<Window: WindowMethods, Back: gfx_hal::Backend> IOCompositor<Window, Back> {
+    fn new(window: Rc<Window>, state: InitialCompositorState<Back>) -> Self {
         let composite_target = match opts::get().output_file {
             Some(_) => CompositeTarget::PngFile,
             None => CompositeTarget::Window
@@ -331,7 +329,7 @@ impl<Window: WindowMethods> IOCompositor<Window> {
         }
     }
 
-    pub fn create(window: Rc<Window>, state: InitialCompositorState) -> Self {
+    pub fn create(window: Rc<Window>, state: InitialCompositorState<Back>) -> Self {
         let mut compositor = IOCompositor::new(window, state);
 
         // Set the size of the root layer.
@@ -1276,13 +1274,40 @@ impl<Window: WindowMethods> IOCompositor<Window> {
                     }
                 });
                 None
-            }
+            },
+            #[cfg(not(feature = "gleam"))]
+            CompositeTarget::PngFile => {
+                let width = width.get();
+                let height = height.get();
+                let pixels = self.webrender.read_pixels_rgba8(
+                    DeviceUintRect::new(
+                        DeviceUintPoint::new(0, 0),
+                        DeviceUintSize::new(width as _, height as _),
+                    )
+                );
+                let img = RgbaImage::from_raw(width as u32, height as u32, pixels).unwrap();
+                profile(ProfilerCategory::ImageSaving, None, self.time_profiler_chan.clone(), || {
+                    match opts::get().output_file.as_ref() {
+                        Some(path) => match File::create(path) {
+                            Ok(mut file) => {
+                                let dynamic_image = DynamicImage::ImageRgba8(img);
+                                if let Err(e) = dynamic_image.write_to(&mut file, ImageFormat::PNG) {
+                                    error!("Failed to save {} ({}).", path, e);
+                                }
+                            },
+                            Err(e) => error!("Failed to create {} ({}).", path, e),
+                        },
+                        None => error!("No file specified."),
+                    }
+                });
+                None
+            },
             #[cfg(not(feature = "gleam"))]
             _ => None,
         };
 
         // Perform the page flip. This will likely block for a while.
-        self.window.present();
+        //self.window.present();
 
         self.last_composite_time = precise_time_ns();
 

@@ -5,8 +5,8 @@
 extern crate backtrace;
 extern crate euclid;
 #[cfg(target_os = "windows")] extern crate gdi32;
-extern crate gleam;
-extern crate glutin;
+//extern crate gleam;
+//extern crate glutin;
 #[macro_use] extern crate lazy_static;
 // The window backed by glutin
 #[macro_use] extern crate log;
@@ -21,10 +21,16 @@ extern crate winit;
 #[cfg(target_os = "windows")] extern crate winapi;
 #[cfg(target_os = "windows")] extern crate user32;
 
+extern crate gfx_hal;
+extern crate gfx_backend_vulkan as back;
+//extern crate gfx_backend_dx12 as back;
+//extern crate gfx_backend_metal as back;
+
 mod glutin_app;
 mod resources;
 
 use backtrace::Backtrace;
+use gfx_hal::Instance;
 use servo::Servo;
 use servo::compositing::windowing::WindowEvent;
 use servo::config::opts::{self, ArgumentParsingResult, parse_url_or_filename};
@@ -149,7 +155,13 @@ pub fn main() {
 
     let target_url = cmdline_url.or(pref_url).or(blank_url).unwrap();
 
-    let mut servo = Servo::new(window.clone());
+    let instance = back::Instance::create("gfx-rs instance", 1);
+    let mut adapters = instance.enumerate_adapters();
+    let adapter = adapters.remove(0);
+    let mut surface = instance.create_surface(window.get_window());
+    let winit::dpi::LogicalSize { width, height } = window.get_window().get_inner_size().unwrap();
+
+    let mut servo = Servo::new(window.clone(), &adapter, &mut surface, (width as u32, height as u32));
 
     let (sender, receiver) = ipc::channel().unwrap();
     servo.handle_events(vec![WindowEvent::NewBrowser(target_url, sender)]);

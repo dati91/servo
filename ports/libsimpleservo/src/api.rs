@@ -362,10 +362,10 @@ impl WindowMethods for ServoCallbacks {
         true
     }
 
-    fn present(&self) {
+    /*fn present(&self) {
         debug!("WindowMethods::present");
         self.host_callbacks.flush();
-    }
+    }*/
 
     fn supports_clipboard(&self) -> bool {
         debug!("WindowMethods::supports_clipboard");
@@ -377,10 +377,10 @@ impl WindowMethods for ServoCallbacks {
         self.waker.clone()
     }
 
-    fn gl(&self) -> Rc<gl::Gl> {
+    /*fn gl(&self) -> Rc<gl::Gl> {
         debug!("WindowMethods::gl");
         self.gl.clone()
-    }
+    }*/
 
     fn set_animation_state(&self, state: AnimationState) {
         debug!("WindowMethods::set_animation_state");

@@ -17,6 +17,7 @@ default = []
 embedder_traits = {path = "../embedder_traits"}
 euclid = "0.19"
 gfx_traits = {path = "../gfx_traits"}
+gfx-hal = { git = "https://github.com/gfx-rs/gfx.git" }
 gleam = {version = "0.6", optional = true}
 image = "0.19"
 ipc-channel = "0.10"
@@ -33,6 +34,7 @@ style_traits = {path = "../style_traits"}
 time = "0.1.17"
 webrender = {git = "https://github.com/servo/webrender", features = ["capture"]}
 webrender_api = {git = "https://github.com/servo/webrender", features = ["ipc"]}
+winit = { version = "0.16", optional = true}
 
 [build-dependencies]
 toml = "0.4.5"

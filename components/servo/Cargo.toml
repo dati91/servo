@@ -24,13 +24,14 @@ unstable = [
     "profile/unstable",
     "script/unstable",
 ]
+vulkan = []
 
 [dependencies]
 bluetooth_traits = {path = "../bluetooth_traits"}
 bluetooth = {path = "../bluetooth"}
 canvas = {path = "../canvas"}
 canvas_traits = {path = "../canvas_traits"}
-compositing = {path = "../compositing", features = ["gleam"]}
+compositing = {path = "../compositing", features = ["winit"]}
 constellation = {path = "../constellation"}
 debugger = {path = "../debugger"}
 devtools = {path = "../devtools"}
@@ -40,6 +41,7 @@ env_logger = "0.5"
 euclid = "0.19"
 gfx = {path = "../gfx"}
 gleam = "0.6"
+gfx-hal = { git = "https://github.com/gfx-rs/gfx.git" }
 ipc-channel = "0.10"
 layout_thread = {path = "../layout_thread"}
 log = "0.4"

@@ -1,12 +1,12 @@
 [workspace]
 members = [
     "ports/servo",
-    "ports/libsimpleservo/",
+    #"ports/libsimpleservo/",
     "tests/unit/*",
 ]
 default-members = [
     "ports/servo",
-    "ports/libsimpleservo/",
+    #"ports/libsimpleservo/",
     "tests/unit/*",
 ]
 exclude = [".cargo"]
@@ -17,7 +17,7 @@ opt-level = 3
 # debug = true
 # lto = false
 
-[patch.crates-io]
+#[patch.crates-io]
 # If you need to temporarily test Servo with a local fork of some upstream
 # crate, add that here. Use the form:
 #
@@ -27,3 +27,11 @@ opt-level = 3
 #
 #     [patch."https://github.com/servo/<repository>"]
 #     <crate> = { path = "/path/to/local/checkout" }
+
+[replace]
+"https://github.com/servo/webrender#0.57.2" = { git = "https://github.com/dati91/webrender", branch="metal_support" }
+"https://github.com/servo/webrender#webrender_api:0.57.2" = { git = "https://github.com/dati91/webrender", branch="metal_support" }
+"https://github.com/gfx-rs/gfx.git#gfx-hal:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="580a58e1c1a83663b6f450ca689e5c40435275c4" }
+"https://github.com/gfx-rs/gfx.git#gfx-backend-vulkan:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="580a58e1c1a83663b6f450ca689e5c40435275c4" }
+"https://github.com/gfx-rs/gfx.git#gfx-backend-dx12:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="580a58e1c1a83663b6f450ca689e5c40435275c4" }
+"https://github.com/gfx-rs/gfx.git#gfx-backend-metal:0.1.0" = { git = "https://github.com/gfx-rs/gfx.git", rev="580a58e1c1a83663b6f450ca689e5c40435275c4" }

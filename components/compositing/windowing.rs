@@ -6,18 +6,20 @@
 
 use embedder_traits::EventLoopWaker;
 use euclid::TypedScale;
-#[cfg(feature = "gleam")]
-use gleam::gl;
+//#[cfg(feature = "gleam")]
+//use gleam::gl;
 use ipc_channel::ipc::IpcSender;
 use msg::constellation_msg::{Key, KeyModifiers, KeyState, TopLevelBrowsingContextId, TraversalDirection};
 use script_traits::{MouseButton, TouchEventType, TouchId};
 use servo_geometry::{DeviceIndependentPixel, DeviceUintLength};
 use servo_url::ServoUrl;
 use std::fmt::{Debug, Error, Formatter};
-#[cfg(feature = "gleam")]
+//#[cfg(feature = "gleam")]
 use std::rc::Rc;
 use style_traits::DevicePixel;
 use webrender_api::{DeviceIntPoint, DevicePoint, DeviceUintSize, DeviceUintRect, ScrollLocation};
+#[cfg(feature = "winit")]
+use winit;
 
 #[derive(Clone)]
 pub enum MouseWindowEvent {
@@ -125,14 +127,14 @@ pub enum AnimationState {
 
 pub trait WindowMethods {
     /// Presents the window to the screen (perhaps by page flipping).
-    fn present(&self);
+    //fn present(&self);
     /// Requests that the window system prepare a composite. Typically this will involve making
     /// some type of platform-specific graphics context current. Returns true if the composite may
     /// proceed and false if it should not.
     fn prepare_for_composite(&self, width: DeviceUintLength, height: DeviceUintLength) -> bool;
     /// Return the GL function pointer trait.
-    #[cfg(feature = "gleam")]
-    fn gl(&self) -> Rc<gl::Gl>;
+    //#[cfg(feature = "gleam")]
+    //fn gl(&self) -> Rc<gl::Gl>;
     /// Returns a thread-safe object to wake up the window's event loop.
     fn create_event_loop_waker(&self) -> Box<EventLoopWaker>;
     /// Get the coordinates of the native window, the screen and the framebuffer.
@@ -144,6 +146,8 @@ pub trait WindowMethods {
     /// will want to avoid blocking on UI events, and just
     /// run the event loop at the vsync interval.
     fn set_animation_state(&self, _state: AnimationState);
+    //#[cfg(feature = "winit")]
+    //fn get_window(&self) -> &winit::Window;
 }
 
 #[derive(Clone, Copy, Debug)]

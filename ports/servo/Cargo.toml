@@ -34,13 +34,14 @@ unstable = ["libservo/unstable"]
 [target.'cfg(not(target_os = "android"))'.dependencies]
 backtrace = "0.3"
 euclid = "0.19"
-gleam = "0.6"
-glutin = "0.18"
+#gleam = "0.6"
+#glutin = "0.18"
 lazy_static = "1"
 libservo = {path = "../../components/servo"}
 log = "0.4"
 tinyfiledialogs = "3.0"
-winit = {version = "0.17", features = ["icon_loading"]}
+winit = {version = "0.16", features = ["icon_loading"]}
+gfx-hal = { git = "https://github.com/gfx-rs/gfx.git" }
 sig = "0.1"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
@@ -53,9 +54,16 @@ x11 = "2.0.0"
 winapi = "0.2"
 user32-sys = "0.2"
 gdi32-sys = "0.2"
+gfx-backend-dx12 = { git = "https://github.com/gfx-rs/gfx.git"}
 
 [target.'cfg(target_os = "macos")'.dependencies]
 osmesa-src = {git = "https://github.com/servo/osmesa-src"}
 
 [target.x86_64-unknown-linux-gnu.dependencies]
 osmesa-src = {git = "https://github.com/servo/osmesa-src"}
+
+[target.'cfg(target_os = "macos")'.dependencies.gfx-backend-metal]
+git = "https://github.com/gfx-rs/gfx.git"
+
+[target.'cfg(all(any(unix, windows), not(target_os = "macos")))'.dependencies.gfx-backend-vulkan]
+git = "https://github.com/gfx-rs/gfx.git"
