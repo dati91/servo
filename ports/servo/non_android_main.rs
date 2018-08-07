@@ -22,9 +22,9 @@ extern crate winit;
 #[cfg(target_os = "windows")] extern crate user32;
 
 extern crate gfx_hal;
-extern crate gfx_backend_vulkan as back;
+//extern crate gfx_backend_vulkan as back;
 //extern crate gfx_backend_dx12 as back;
-//extern crate gfx_backend_metal as back;
+extern crate gfx_backend_metal as back;
 
 mod glutin_app;
 mod resources;

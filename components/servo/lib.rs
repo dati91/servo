@@ -176,15 +176,15 @@ impl<Window, Back> Servo<Window, Back> where Window: WindowMethods + 'static, Ba
             debug_flags.set(webrender::DebugFlags::PROFILER_DBG, opts.webrender_stats);
 
             let render_notifier = Box::new(RenderNotifier::new(compositor_proxy.clone()));
-
+            let dp_ratio = coordinates.hidpi_factor.get();
             let init = webrender::RendererInit {
                 adapter: &adapter,
                 surface: surface,
-                window_size: size,
+                window_size: (size.0 * dp_ratio as u32, size.1 * dp_ratio as u32),
             };
 
             webrender::Renderer::new(init, render_notifier, webrender::RendererOptions {
-                device_pixel_ratio: coordinates.hidpi_factor.get(),
+                device_pixel_ratio: dp_ratio,
                 resource_override_path: opts.shaders_dir.clone(),
                 enable_aa: opts.enable_text_antialiasing,
                 debug_flags: debug_flags,
